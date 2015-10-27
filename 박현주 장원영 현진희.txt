@@ -1,0 +1,43 @@
+고민하다가 해결한점 
+
+핑크색 동그라미 원을 만들려니 자꾸 타원형이 되어서 애먹었다.
+일단 모서리를 css에서 bordor-radius를 10% 20% ~ 50%까지 바꾸면서 동그란 형태로 만들었다.
+그런데 계속 어떻게 해도 원이 타원형이었지만 고민하고 인터넷을 찾아보면서 padding 을 넣어봤더니 
+원의 혇태가 해결되었다.
+.circle{
+	background: #FF8080; 
+	padding: 60px;
+   -moz-border-radius: 10px; 
+   -webkit-border-radius: 10px; 
+   border-radius: 50%;
+
+해결하지 못한 부분
+박현주 장원영 현진희의 이름의 폰트 크기를 키우지 못하였다. <p font-size= "40px"를 통해서 키워보려고 하였지만 잘 되지 않았다.> 
+폰트 사이즈 크기를 좀더 크게 만들어주세요 
+
+<h2> 만든 사람들</h2>
+		<div class="col-md-4">
+			<p align="center"> 박현주 </p>
+			<p class="circle">
+						
+
+		</p>
+
+		</div>
+		<div class="col-md-4">
+			<p align="center"> 장원영 </p>
+			<p class="circle">
+						
+		</p>
+		</div>
+		<div class="col-md-4">
+			<p align="center"> 현진희 </p>
+			<p class="circle">
+						
+			</p>
+		</div>
+                                
+이때까지 발전한 부분
+col-md-6 이란 것을 통해 화면을 좌우 50대 50 으로 하여 나누는 것을 할 줄 알게 되었다.
+style sheet를 외부에서 불러오면서 달려왔던 쓸모없는 것들을 알게되어 삭제하여 코드가 더욱 깔끔해 지게 되었다.
+이때까지 바깥족 여백인 margin만 알고있었지만 안쪽 여백인 padding을 알게 되었다 !
