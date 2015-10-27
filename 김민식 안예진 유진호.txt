@@ -1,0 +1,89 @@
+#include <iostream>
+#include <string>
+using namespace std;
+/*데이터베이스가 되는 txt파일 등을 이용해서 txt파일에 존재하는 전자과 학생들의 정보를 객체 배열 하나하나에 담아 프로그램을 가동시키려 하는데, 
+txt 파일 등을 Visual Studio에 연결 시켜서 문자열, 숫자, 문자 등으로 구분이 가능할까요? 
+메뉴 구현 등은 아이디어 문제라서 생각만 조금 하면 가능할 것 같습니다. */
+class Student{
+public:
+	Student();
+	int number;
+	string name;
+	int classnum[4];
+	string classname[4];
+	double avg_score;
+	void print_name();
+	void print_all();
+};
+
+Student::Student(){
+	 // 예시
+	number = 201511360;
+	name = "유진호";
+	classnum[0] = 1234;
+	classnum[1] = 4567;
+	classnum[2] = 5103;
+	classnum[3] = 6311;
+	classname[0] = "컴퓨터 프로그래밍 2"; classname[1] = "수학 및 연습 2";
+	classname[2] = "물리학 및 실험 2"; classname[3] = "전자응용수학";
+}
+
+void Student::print_all(){
+	cout << endl;
+	cout << "이름 : " << name << endl;
+	cout << "학번 : " << number << endl;
+	cout << "-------------수강하는 과목-------------" << endl;
+	for (int i = 0; i < 4; i++){
+		cout << classname[i] << "(" << classnum[i] << ") ";
+		cout << endl;
+	}
+	cout << endl;
+
+}
+void Student::print_name(){
+	cout << "이름 : " << name << endl;
+	cout << "학번 : " << number << endl;
+}
+
+int main(){
+	Student Electronics[89];
+	cout << "**************전자과 종합정보시스템**************" << endl;
+	cout << "(1) 학생 정보 출력" << endl; cout << "(2) 같은 수업 듣는사람 찾기" << endl; 
+	cout << "(3) 평균 학점 분포" << endl; 
+	while (true){
+	    cout << "어떤 프로그램을 실행하시겠습니까? : ";
+	    int menu;
+	    cin >> menu;
+		if (menu == 1){
+			int number;
+			cout << "학번을 입력하세요 : ";
+			cin >> number;
+
+			int i = 0;
+			while (true){
+				if (Electronics[i].number == number)
+					break;
+				i++;
+			}
+			Electronics[i].print_all();
+		}
+		else if (menu == 2){
+			int number;
+			cout << "과목번호를 입력하세요. : ";
+			cin >> number;
+
+			//검색해서 과목번호 맞으면 출력
+			for (int i = 0; i < 89; i++){
+				for (int j = 0; j < 4; j++){
+					if (Electronics[i].classnum[j] == number){
+						Electronics[i].print_name();
+					}
+				}
+			}
+		}
+		else if (menu == 3){
+			//학점 비교
+
+		}
+	}
+}
