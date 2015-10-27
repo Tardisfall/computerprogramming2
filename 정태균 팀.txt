@@ -1,0 +1,487 @@
+1. 조원 : 201011465정태균 201011408민인기 201011414박정한 201111496홍은혁
+
+2. 개발목표 : 안드로이드 구글맵 api를 이용한 실시간 위치 좌표공유
+
+3. 중간 목표 : 클라이언트를 여러명 수용할수 있는 서버를 개발하고, 클라이언트간 메세지 전달.
+
+4. 난점: 서버를 개발하는데에 있어서 1:1 채팅은 무리가 없었으나 다수의 클라이언트가 동시접속하였을시
+
+서버에서 받아들인 메세지를 브로드 캐스팅 하는것이 어려웠음.
+
+5. 극복방법: 서버에서 sendtoAll 이라는 클래스를 따로 만들고 클라이언트를 arraylist로 저장하여 브로드캐스트가 가능하도록 개발.
+
+6. 다음 목표 : 구글맵 api를 이용하여 텍스트 대신 클라이언트의 현재 좌표 전달이 가능하도록 함.
+
+* 개발환경 : 클라이언트: 안드로이드 젤리빈 이상/ 서버: 이클립스. 
+
+
+
+
+
+
+
+
+==================================tcp clinet=========================================================
+package com.example.eelab.tcpclient;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketAddress;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+public class Tcp extends Activity {
+    /**
+     * telnet localhost 5554
+     * redir add tcp:5000:6000
+     * 클라이언트에서 10.0.2.2 IP 주소와 5000으로 접속한다.
+     */
+    private Handler  mHandler;
+    private Socket socket;
+    private String name = null;
+
+    private DataInputStream input;    private DataOutputStream output;
+
+    private String msg = "";
+
+    private BufferedReader networkReader = null;
+    private BufferedWriter networkWriter = null;
+    private Button connect;
+    private Button finish;
+    private Button start;
+    private Button file;
+    private TextView text;
+    private TCPClient client = null;
+
+    private String ip;
+    private int port = 5000;
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        if (client != null){
+            new Thread() {
+                @Override
+                public void run() {
+                    client.quit();
+                }
+            };
+        }
+    }
+
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.main);
+        mHandler = new Handler();
+
+        final EditText ID = (EditText) findViewById(R.id.editText0);
+        final EditText eip =(EditText) findViewById(R.id.editText1);
+        final EditText eport =(EditText) findViewById(R.id.editText2);
+        final EditText et =(EditText) findViewById(R.id.editText3);
+
+        connect = (Button)findViewById(R.id.button1);
+        finish = (Button)findViewById(R.id.button2);
+        start = (Button)findViewById(R.id.button3);
+        file = (Button)findViewById(R.id.button4);
+        text = (TextView)findViewById(R.id.textView1);
+
+        connect.setEnabled(true);
+        finish.setEnabled(false);
+        start.setEnabled(false);
+        file.setEnabled(false);
+
+        connect.setOnClickListener(new OnClickListener(){
+            @Override
+            public void onClick(View V){ //연결 버튼 누를시
+                ip = eip.getText().toString(); //아이피 저장
+                name = ID.getText().toString();
+
+                try {
+                    port = Integer.parseInt(eport.getText().toString());//포트저장
+                } catch (NumberFormatException  e) {//예외시 5000
+                    port = 5000;
+                }
+
+                if (client == null) {
+                        client = new TCPClient(ip,port); //해당 클래스 호출
+                        client.start();
+                }
+            }
+        });
+
+        finish.setOnClickListener(new OnClickListener(){
+            @Override
+            public void onClick(View V){
+                if (client != null) {
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            client.quit();
+                            text.setText("접속이 종료되었습니다.");
+                            Toast.makeText(Tcp.this, "접속이 종료되었습니다.", Toast.LENGTH_SHORT).show();
+                        }
+                    }.start();
+
+                    client = null;
+                    connect.setEnabled(true);
+                    finish.setEnabled(false);
+                    start.setEnabled(false);
+
+                }
+            }
+
+
+                    });
+
+        start.setOnClickListener(new OnClickListener(){
+            @Override
+            public void onClick(View V){  //전달 버튼 누를시
+                if(et.getText().toString() != null){
+        			/*
+        			 * 화면의 뷰들은 메인스레드에 연결되기 때문에 아래와 같이
+        			 * 일반 스레드에서 생성한 스트림을 공유해야 한다.
+        			 * 따라서 하나의 액티비티는 하나의 레이아웃과 연결되어 입출력이 가능하다.
+        			 * 따라서 서버와 연결된 하나의 스트림을 사용하는 것이 좋다.
+        			 * 만약 다수의 서버와 연결된 다수의 스트림을 사용한다면 상당히 복잡하게 된다.
+        			 *
+        			 */
+                    String return_msg = et.getText().toString(); //전달하고픈 텍스트를 스트링으로 저장
+                    if(output != null) {
+                        try {
+
+                            msg = return_msg;
+                            if(msg.equals("exit"))
+                              System.exit(0);
+
+                            output.writeUTF("[" + name + "]" + msg);
+
+                            //networkWriter.write(return_msg); //버퍼 라이터에 텍스트 삽입
+                            // 자바에서는 라인을 넣어 주어야 전송이 된다.
+                            //쓰레드가 돌아가고 있으므로 버퍼라이터가 가지고 있으면 계속적으로 서버로 전송이 된다.
+                            //networkWriter.newLine();
+                            //networkWriter.flush();
+                        } catch (IOException e) {
+                            text.setText("정상적으로 문자를 전송할 수 없었습니다.");
+                        }
+                    }
+                }
+            }
+        });
+
+        file.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View V) {  //전달 버튼 누를시
+
+                Intent i1 = new Intent(V.getContext(), SendfileActivity.class);
+                startActivity(i1);
+
+
+            }
+        });
+    }
+
+    public class TCPClient extends Thread {
+        Boolean loop;
+        SocketAddress socketAddress;
+        String line;
+
+
+        private final int connection_timeout = 3000;
+
+        public TCPClient(String ip,int port) {
+            socketAddress = new InetSocketAddress(ip,port);
+        }//생성자
+
+        @Override
+        public void run(){
+            try {
+                socket = new Socket(); //클라이언트 소켓 객체 생성
+                socket.setSoTimeout(connection_timeout);
+                socket.setSoLinger(true, connection_timeout);
+                socket.connect(socketAddress, connection_timeout);//IP와 PORT를 이용하여 서버에 연결 . (서버의 ACCEPT와 맞물린다)
+
+                input = new DataInputStream(socket.getInputStream());
+                output = new DataOutputStream(socket.getOutputStream());
+                output.writeUTF(name);
+
+                //networkWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())); //네트워크 라이터에 저장된 데이터를 아웃풋스트림을 통해 소켓에 저장후 전송
+                  //입력문장을 입력스트림을 이용해 소켓에 담고 스트림 리더 객체 i에 저장
+                //networkReader = new BufferedReader(i);
+
+                Runnable showUpdate = new Runnable(){
+                    @Override
+                    public void run(){
+                        text.setText("정상적으로 서버에 접속하였습니다.");
+                        connect.setEnabled(false);
+                        finish.setEnabled(true);
+                        start.setEnabled(true);
+                        file.setEnabled(true);
+                    }
+                };
+
+                mHandler.post(showUpdate);
+                loop = true;
+            } catch (Exception e) {
+                loop = false;
+                e.printStackTrace();
+            }
+
+            while(loop) {
+
+                                        try {
+
+
+                                            line = input.readUTF(); //입력스트림을 라인에 저장
+                                            if (line == null)
+                                                break;
+
+                    Runnable showUpdate = new Runnable(){
+                        @Override
+                        public void run(){
+
+
+
+
+                            text.setText(line);//클라이언트 상의 텍스트뷰에 문장 출력
+                        }
+                    };
+
+                    mHandler.post(showUpdate);
+
+
+
+
+                } catch (IOException e) {
+                    //	e.printStackTrace();
+                } catch (NullPointerException npx) {
+                    npx.printStackTrace();
+                    break;
+                }
+            }
+
+            try {
+                if (input != null) {
+                   input.close();
+                    input = null;
+                }
+                if (output != null) {
+                    output.close();
+                    output = null;
+                }
+                if(socket != null) {
+                    socket.close();
+                    socket = null;
+                }
+                client = null;
+                if (loop) {
+                    Runnable showUpdate = new Runnable(){
+                        @Override
+                        public void run(){
+                            text.setText("서버에서 종료시켰습니다.");
+                            connect.setEnabled(true);
+                            finish.setEnabled(false);
+                            start.setEnabled(false);
+                        }
+                    };
+
+                    mHandler.post(showUpdate);
+                }
+            } catch (IOException e) {
+                //	e.printStackTrace();
+            }
+        }
+
+        public void quit() {
+            loop = false;
+    		/*
+    		 * 정상 종료될 때까지 약간의 시간을 주어야 한다.
+    		 * 패킷을 rst이나 fin 패킷 전송등에서 지연시간이 존재하기 때문에
+    		 * 시간 지연없이 종료하고 다시 연결하고 다시 종료하면  에러가 발생할 가능성이 높아진다.
+    		 * 약 2~3초가 가장 적당한 것 같다.
+    		 *
+			 * 서버와 달리 아래와 같이 소켓을 닫으면  read 문에서 null를 반환되지 않는다. 같은 소켓 클래스이지만
+			 * 구현된 방식은 다르다. 따라서 빈드시 타임 아웃 옵션만으로 문제를 해결해야 한다.
+			 *
+			 * if(socket != null) {
+			 *		try {
+			 *			socket.close();
+			 *		} catch (IOException e) {
+			 *			e.printStackTrace();
+			 *		}
+			 *	}
+			 */
+            try {
+                if(socket != null) {
+                    socket.close();
+                    socket = null;
+                }
+                Thread.sleep(connection_timeout);
+            } catch (InterruptedException e) {
+            } catch (IOException e) {
+                // e.printStackTrace();
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+===============================================server=========================================================
+
+package Server313;
+
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
+ 
+public class Server313 {
+    private ArrayList<Vertex> clients;
+    private ServerSocket serverSocket;
+ 
+    public static void main(String[] args) {
+        new Server313().start();
+    }
+    
+    
+    public class Vertex {
+    	Vertex(String a, DataOutputStream b){
+    		ax = a;
+    		bx = b;
+    		
+    	}
+    	public String ax;
+    	public DataOutputStream bx;
+
+    }
+
+ 
+    public Server313() {
+        clients = new ArrayList<Vertex>();
+ 
+        // 여러 스레드에서 접근할 것이므로 동기화
+        //Collections.synchronizedMap(clients);
+    }
+ 
+    public void start() {
+        try {
+            Socket socket;
+ 
+            // 리스너 소켓 생성
+            serverSocket = new ServerSocket(6597);
+            System.out.println("서버가 시작되었습니다.");
+ 
+            // 클라이언트와 연결되면
+            while (true) {
+                // 통신 소켓을 생성하고 스레드 생성(소켓은 1:1로만 연결된다)
+                socket = serverSocket.accept();
+                ServerReceiver receiver = new ServerReceiver(socket);
+                receiver.start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+ 
+    class ServerReceiver extends Thread {
+        Socket socket;
+        DataInputStream input;
+        DataOutputStream output;
+ 
+        public ServerReceiver(Socket socket) {
+            this.socket = socket;
+            try {
+                input = new DataInputStream(socket.getInputStream());
+                output = new DataOutputStream(socket.getOutputStream());
+            } catch (IOException e) {
+            }
+        }
+ 
+        @Override
+        public void run() {
+            String name = "";
+            try {
+                // 클라이언트가 서버에 접속하면 대화방에 알린다.
+                name = input.readUTF();
+                /*sendToAll("#" + name + "[" + socket.getInetAddress() + ":"
+                        + socket.getPort() + "]" + "님이 대화방에 접속하였습니다.");*/
+ 
+                clients.add(new Vertex(name, output));
+                System.out.println(name + "[" + socket.getInetAddress() + ":"
+                        + socket.getPort() + "]" + "님이 대화방에 접속하였습니다.");
+                System.out.println("현재 " + clients.size() + "명이 대화방에 접속 중입니다.");
+ 
+                // 메세지 전송
+                while (input != null) {
+                    sendToAll(input.readUTF());
+                }
+                
+            } catch (IOException e) {
+            } finally {
+                // 접속이 종료되었습니다.
+                for(int i=0; i <clients.size(); i++){
+                	if(clients.get(i).ax.equals(name)){
+                		clients.remove(i);
+                	}
+                	
+                	
+                }
+                
+                
+                /*sendToAll("#" + name + "[" + socket.getInetAddress() + ":"
+                        + socket.getPort() + "]" + "님이 대화방에서 나갔습니다.");*/
+                System.out.println(name + "[" + socket.getInetAddress() + ":"
+                        + socket.getPort() + "]" + "님이 대화방에서 나갔습니다.");
+                System.out.println("현재 " + clients.size() + "명이 대화방에 접속 중입니다.");
+            }
+        }
+ 
+        public void sendToAll(String message) {
+        	
+        	//선택적 전송은 여기를 확인할것.
+            for (int k = 0; k < clients.size(); k++) {
+                	
+                		try {
+                		
+                			DataOutputStream dos = clients.get(k).bx;
+                			dos.writeUTF(message);}
+                    catch (Exception e) {
+                    	System.out.println("현재 " + clients.size() + "명이 대화방에 접속 중입니다.");
+                    }
+               
+            }
+        
+    }
+}
+}
