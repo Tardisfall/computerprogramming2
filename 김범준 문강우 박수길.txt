@@ -1,0 +1,45 @@
+#include <iostream>
+using namespace std;
+
+
+
+class Totto{
+	int money;
+	public:
+		Totto();
+		Totto(int *p);
+	
+};
+
+Totto :: Totto (int *p){
+int result;
+int bid;
+cout<<"맨체스터vs아스날, 왼쪽팀이 이길것같으면 L. 오른쪽은 R"<<endl;
+cin >> result;
+
+if(result=='L')
+	bid=money*2;
+else if(result=='R')
+	bid=money*0;
+
+cout<<bid<<endl;
+		}
+
+int main()
+{ 
+	int money,bid;
+	char result;
+	
+	cout<<"돈을 베팅하시오:"<<endl;
+	cin >> money;
+
+	cout<<"맨체스터vs아스날, 왼쪽팀이 이길것같으면 L. 오른쪽은 R"<<endl;
+	cin >> result;
+
+	if(result=='L')
+		bid=money*2;
+	else if(result=='R')
+		bid=money*0;
+	
+	cout<<bid<<endl;
+}
