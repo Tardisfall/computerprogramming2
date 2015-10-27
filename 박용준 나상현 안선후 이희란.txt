@@ -1,0 +1,180 @@
+1. 비트맵 
+- Bitmap을 받기 위해서 리소스 뷰에서 ~.rc를 우측 마우스로 클릭 - > [리소스 추가] 를 통해서
+  내가 원하는 그림을 클릭시켜 [가져오기]를 통해서 그림을 가져온다. 
+  코드는 다음과 같다. 
+
+소스파일 - [ChildView.cpp]
+
+void CChildView::OnPaint()
+{
+	CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
+
+	CBitmap bitmap;
+	bitmap.LoadBitmap(IDB_BITMAP1);  /// IDB_BITMAP1은 내가 원하는 그림파일 
+	BITMAP bmpInfo;                  /// bitmap의 정보를 가져오기 위해서 선언
+	bitmap.GetBitmap(&bmpInfo);      /// bitmap의 정보를 가져와서
+
+	CDC dcmem;
+	dcmem.CreateCompatibleDC(&dc);   
+	dcmem.SelectObject(&bitmap);
+	dc.BitBlt(0, 0, bmpInfo.bmWidth, bmpInfo.bmHeight, &dcmem, 0, 0, SRCCOPY);
+}
+
+이 코드를 통해서 내가 원하는 그림파일을 윈도우 창의 client 부분에 띄울 수 있다. 
+우리 조가 비트맵을 공부한 이유는 [지뢰찾기]에서 빈칸을 누르면 그 부분이 [숫자], [지뢰], [깃발] 로
+변하는데 이러한 부분을 구현하기 위해서 비트맵 공부를 하였다. 
+
+질문 1. 
+
+마우스 왼쪽 버튼을 눌렀을 때 실행하는 이벤트를 다음과 같이 정의하였다. 
+여기서 IDB_BITMAP2에는 내가 바꾸고 싶은 그림을 [리소스 추가] 를 통해서 넣었다.
+위와 같은 코드임에도 불구하고 그림이 바뀌지 않는데, 그 이유를 모르겠다. 
+
+void CChildView::OnLButtonDown(UINT nFlags, CPoint point)
+{
+	// TODO: 여기에 메시지 처리기 코드를 추가 및/또는 기본값을 호출합니다.
+	CPaintDC dc(this);
+
+	CBitmap bitmap1;
+	bitmap1.LoadBitmap(IDB_BITMAP2);
+	BITMAP bmpInfo2;
+	bitmap1.GetBitmap(&bmpInfo2);
+
+	CDC dcmem2;
+	dcmem2.CreateCompatibleDC(&dc);
+	dcmem2.SelectObject(&bitmap1);
+	dc.BitBlt(0, 0, bmpInfo2.bmWidth, bmpInfo2.bmHeight, &dcmem2, 0, 0, SRCCOPY);
+	CWnd::OnLButtonDown(nFlags, point);
+}
+
+2. 사각형 그리기
+- [지뢰찾기]에서 가장 기본이 되는 윈도우창 틀을 만들기 위한 작업이라고 생각한다. 
+  i와 j를 통해 2중 for문을 돌려서 구현하였다. 뼈대만 만든것이다.
+ 
+void CChildView::OnPaint()
+{
+	CPaintDC dc(this); // 그리기를 위한 디바이스 컨텍스트입니다.
+	int x = 0;
+	int y = 0;
+	int i = 0;
+	int j = 0;
+
+	for (x = 0; x < 8; x++)
+	{
+		for (y = 0; y < 8; y++)
+		{
+			dc.Rectangle(i, j , i+20, j+20);
+			i += 20;
+		}
+		i = 0;
+		j += 20;
+	}
+}
+
+여기서 중요한 점은 사각형을 그릴 때는 사각형의 왼쪽 위 지점, 오른쪽 아래 지점을 적어준다는 것이다. 
+우리 조는 8 * 8 [지뢰찾기]게임을 구현하고 싶기 때문에 for문에 8을 집어넣었다. 
+여기서 다음줄로 넘어갈때 i =0 을 해줌으로써 다음줄에서도 같은 칸에서 시작하게 만들었다.
+
+질문 2. 
+여기서 비트맵과 연동하는 법을 모르겠다. 네모칸 하나에 하나의 비트맵을 삽입해서 그 한칸,한칸 내가
+클릭할때마다 다른 그림으로 변하게 만들고 싶은데, 그 방법을 아직 모르겠다. 
+다른 방식을 사용하는 것인지, 이런식으로 하는 방법도 가능한 것인지 묻고 싶다. 
+
+
+3. 윈도우 응용프로그램
+  윈도우 응용프로그램을 실행시키기 위해서는 우선 windows.h의 헤더파일을 include해주어 그 header 파일에 선언된 변수와 함수들을 이용하여야한다.
+윈도우 응용프로그램은 우리가 수업시간에 배우고있는 콘솔응용프로그램의 main()함수와 비슷하게 WinMain()이라는 함수를 이용하여 프로그램을 시작한다.
+WinMain 함수는 4가지의 인자를 받는데, 이 인자의 의미는 아직 정확히 이해하지 못했다.
+WinMain함수 내부에서는 반드시 WNDCLASS 구조체 생성, 윈도우생성, 윈도우 출력, 메시지 루프생성이 차례대로 코딩되어야 한다.
+첫번째 WNDCLASS 구조체 생성에서는 핸들러와 메시지, 클래스를 선언해주고 초기값을 설정해 준다.
+예를들어, WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);의 코드는 윈도우 창의 background color를 흰색으로 설정해주는 코드이다.
+두번째로 윈도우 창을 생성하는 코드를 입력해야하는데 윈도우창은 CreateWindow라는 함수를 이용하면 된다. 이 때 인자들은 총 11가지가 들어가는데
+윈도우 창을 스크린의 어느 좌표에 생성할것인지, 사이즈는 어떻게 할 것인지 등을 이 인자로 지정해준다. 아래 코드에서는 거의 defualt값을 설정해주었다.
+세번째로 윈도우 출력을 해야하는데, 이를 해야하는 이유는 윈도우 생성만 하면 메모리공간에 윈도우 창을 생성할 정보들이 저장만 되는 것이기 때문에
+윈도우창을 실제로 화면에 띄우려면 반드시 ShowWindow라는 함수를 이용하여 윈도우를 출력해주어야한다.
+그리고 마지막으로 메세지루프를 생성해야하는데 MFC는 전달된 메세지를 처리하는 방식으로 프로그램이 실행되기 때문에
+종료메세지가 전달되기 전까지는 while 루프를 이용하여 계속 메세지를 받아와야 한다. 참고적으로, MFC에서 메세지는
+클릭할때, 창크기를 조절할 때, 드래그할 때 등 사용자가 프로그램에 어떤 입력을 할 때 전달된다.
+전달된 메세지는 translateMessage와 dispatchmassage 함수를 이용하여 전달, 처리 된다.
+아래 코드는 윈도우 응용프로그램을 생성할 수 있도록 기본적인 요소들을 이용하여 코딩한 것이다.
+//3.WinMain함수 구현 이라고 주석처리 된 부분에서 기본적인 설정을 해주었고
+//프로그램종료 라고 주석처리된 부분에서 종료메세지를 받았을 때 프로그램을 종료하는 코드를 구현하였다.
+프로그램 종료 코드는 switch-case문을 이용하였고, 이 때 case를 나눌 인자에는 iMessage라는 메세지가 들어가는데
+WinMain함수에서 선언하지 않은 메세지인 것을 보아 windows.h에 기본적으로 들어있는 메세지로 추정된다.
+case는 2가지로 나누었는데 Menu에서 Exit을 클릭하면 PostQuitMessage(0);의 메세지가 실행되면서 프로그램이 종료된다.
+menu는 리소스파일에서 추가해주었고 이를 #include "resource.h"를 이용하여 연동시켜주었다.
+
+<<소스코드>>
+
+//1. 헤더파일추가
+#include <windows.h>
+#include "resource.h"
+
+//2. 선언부 코드 추가
+LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);	//윈도우 프로시저
+
+HINSTANCE g_hInst;	//인스턴스 핸들
+LPCWSTR lpszClass = L"HelloWin32";	//class 이름
+
+//3. WinMain 함수 구현 => WNDCLASS 구조체 생성 -> 윈도우생성 -> 윈도우 출력 -> 메시지루프 생성 순으로 구현
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpszCmdParam, int nCmdShow)
+{
+	//WNDCLASS 구조체 생성
+	HWND hWnd;	//윈도우 핸들
+	MSG Message;	//메시지
+	WNDCLASS WndClass;	//윈도우 클래스
+	g_hInst = hInstance;	//인스턴스 핸들
+
+	WndClass.cbClsExtra = 0;
+	WndClass.cbWndExtra = 0;
+	WndClass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);	//백그라운드
+	WndClass.hCursor = LoadCursor(NULL, IDC_ARROW);	//마우스 커서
+	WndClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);	//프로그램아이콘
+	WndClass.hInstance = hInstance;	//인스턴스 핸들
+	WndClass.lpfnWndProc = (WNDPROC)WndProc;	//윈도우 프로시저함수 지정
+	WndClass.lpszClassName = lpszClass;	//윈도우 클래스 이름
+	WndClass.lpszMenuName = MAKEINTRESOURCE(IDR_MENU1);	//메뉴
+	WndClass.style = CS_HREDRAW | CS_VREDRAW;	//윈도우 스타일
+	RegisterClass(&WndClass);	//윈도우 클래스 등록
+
+	//윈도우 생성
+	hWnd = CreateWindow(lpszClass, lpszClass, WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, (HMENU)NULL, hInstance, NULL);
+
+	//윈도우 출력
+	ShowWindow(hWnd, nCmdShow);
+
+	//메시지루프생성
+	while (GetMessage(&Message, 0, 0, 0))
+	{
+		TranslateMessage(&Message);
+		DispatchMessage(&Message);
+	}
+	return Message.wParam;
+}
+
+//프로그램종료
+LRESULT CALLBACK WndProc(HWND hWnd, UINT iMessage, WPARAM wParam, LPARAM lParam)
+{
+	switch (iMessage)
+	{
+	case WM_COMMAND:
+		switch (LOWORD(wParam))
+		{
+		case ID_MENU_GAMESTART:
+			MessageBox(hWnd, L"게임을 시작합니다", L"HelloWin32", MB_OK); 
+			break;
+		case ID_MENU_EXIT:
+			PostQuitMessage(0);
+			break;
+
+		}
+		return 0;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return(DefWindowProc(hWnd, iMessage, wParam, lParam));
+}
+
+질문 3. MFC응용프로그램으로 생성한 프로그램과 window응용프로그램으로 생성한 프로그램의 차이가 무엇일까?
