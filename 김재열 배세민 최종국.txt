@@ -1,0 +1,132 @@
+//참참참
+#include <iostream>
+#include <stdlib.h>  
+#include <time.h>  
+using namespace std;
+int main() 
+{ 
+	int computer, user; 
+	int i;
+	int v = 0, l = 0;  
+	
+	srand((unsigned int)time(NULL)); 
+	
+	for (i = 0; i < 10; i++) { // 10판  
+		computer = rand() % 3; 
+		cout << "좌(0) 중(1) 우(2): ";
+		cin >> user;
+		
+		if (computer == user) 
+		{ // 유저와 컴퓨터가 같은 방향이면   
+			cout << "승리!!!!" << endl; // 승리 
+			v++; // 승리 횟수 카운팅 
+		}       
+		else { 
+			cout << "패배" << endl;
+			l++;
+			// 패배 횟수 카운팅   
+		}  
+
+		cout << v <<"판 승리 : " <<  l << "판 패배" << endl; // 현재 스코어 출력 
+	}   
+	return 0;  
+}
+
+//가위바위보
+#include <iostream> // 표준입출력스트림  
+#include <stdlib.h> // 랜덤값을 쓰기 위해 포함  
+#include <time.h> // srand()의 호출에 쓰일 time()을 위해 포함  
+using namespace std;
+
+#define DRAW 0  // 무승부  
+#define PLAYER 1  // 플레이어 승  
+#define COMPUTER 2 // 컴퓨터 승  
+
+void menu() { // 메뉴  
+ cout << "*************************" << endl; 
+ cout << "* 가위 / 바위 / 보 게임 *" << endl;
+ cout << "*************************\n" << endl;
+}
+class Player { // 플레이어 클래스  
+public:
+	  int hand; // 플레이어의 손 (가위 1, 바위 2, 보 3)  
+	   int MakeHand() { // 플레이어의 손 모양을 입력받아 반환하는 멤버 함수  
+		     cout << "가위(1) 바위(2) 보(3) 종료(4) 선택: ";
+		    cin >> hand; // 사용자로부터 손 모양을 입력받음  
+		     return hand;
+		
+	}
+};
+
+class Computer { // 컴퓨터 클래스  
+public:
+  int hand; // 컴퓨터의 손 (가위 1, 바위 2, 보 3)  
+   int MakeHand() { // 컴퓨터의 손 모양을 생성하여 반환하는 멤버 함수   
+	       hand = rand() % 3 + 1; // 0~2 까지의 랜덤 값 생성(+1을 통해 가위 1,바위 2,보 3에 대응)  
+		     return hand;
+
+		};
+};
+
+class Judge { // 심판 클래스  
+public:
+	   int winner; // 승자  
+		
+		  void Result(int player_hand, int computer_hand) { // 승자를 판정하는 멤버 함수  
+		        if (player_hand == 1 && computer_hand == 1) // 가위 VS 가위 (무승부)  
+		          winner = DRAW;
+		     else if (player_hand == 1 && computer_hand == 2) // 가위 VS 바위 (컴퓨터 - 바위 승)  
+		           winner = COMPUTER;
+		    else if (player_hand == 1 && computer_hand == 3) // 가위 VS 보 (사용자 - 가위 승)  
+	          winner = PLAYER;
+	        else if (player_hand == 2 && computer_hand == 1) // 바위 VS 가위 (사용자 - 바위 승)  
+			          winner = PLAYER;
+			     else if (player_hand == 2 && computer_hand == 2) // 바위 VS 바위 (무승부)  
+		           winner = DRAW;
+		       else if (player_hand == 2 && computer_hand == 3) // 바위 VS 보 (컴퓨터 - 보 승)  
+		        winner = COMPUTER;
+	     else if (player_hand == 3 && computer_hand == 1) // 보 VS 가위 (컴퓨터 - 가위 승)  
+			          winner = COMPUTER;
+		      else if (player_hand == 3 && computer_hand == 2) // 보 VS 바위 (사용자 - 보 승)  
+				            winner = PLAYER;
+	    else if (player_hand == 3 && computer_hand == 3) // 보 VS 보 (무승부)  
+			           winner = DRAW;
+		}
+ void ShowHands(int player_hand, int computer_hand) { // 플레이어와 컴퓨터의 손 모양 표시 멤버 함수  
+	      cout << "[" << player_hand << "] VS [" << computer_hand << "]" << endl;
+		}
+
+		void WhoIsWinner() { // 승자를 표시하는 멤버 함수  
+		    if (winner == DRAW)
+		           cout << "무승부입니다." << endl;
+		    else if (winner == PLAYER)
+			          cout << "당신이 이겼습니다." << endl;
+		      else
+			          cout << "컴퓨터가 이겼습니다." << endl;
+		       cout << endl;
+		}
+};
+void main() {
+	srand(time(NULL)); // 매번 실행할 때마다 다른 난수표를 사용하기 위해서 srand()를 호출 (매번 다른 난수표(seed)를 선택)  
+	   menu(); // 메뉴 출력  
+		 Player player; // 플레이어 객체 생성  
+  Computer computer; // 컴퓨터 객체 생성  
+  Judge judge; // 심판 객체 생성  
+
+	 int player_hand; // 플레이어의 손(이후에 makehand로 값 저장)  
+ int computer_hand; // 컴퓨터의 손(이후에 makehand로 값 저장)  
+
+	   while (1) { // 무한 루프  
+     player_hand = player.MakeHand(); // 플레이어의 손 모양을 선택한다.  
+	     if (player_hand == 4) { // 4번을 선택하면  
+		           cout << "종료합니다." << endl;
+		          break; // 종료  
+		}
+	     computer_hand = computer.MakeHand(); // 컴퓨터의 손 모양을 선택  
+	
+	      judge.ShowHands(player_hand, computer_hand); // 플레이어와 컴퓨터의 손 모양을 표시  
+	       judge.Result(player_hand, computer_hand); // 승자를 판정  
+		      judge.WhoIsWinner(); // 승자를 출력  
+	}
+
+}
